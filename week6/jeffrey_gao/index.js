@@ -20,10 +20,8 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chat message', (msg) => {
-        const date = new Date();
-        const timeString = date.toLocaleTimeString();
-        const dateString = date.toLocaleDateString();
-        io.emit('chat message', { user: users[socket.id] || 'Anonymous', text: msg, time: dateString + " " + timeString });
+        const timestamp = new Date().toLocaleTimeString();
+        io.emit('chat message', { user: users[socket.id] || 'Anonymous', text: msg, time: timestamp });
     });
 
     socket.on('typing', () => {
