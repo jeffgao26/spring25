@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO Chat</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      body { margin: 0; padding-bottom: 3rem; font-family: Arial, sans-serif; background: #f5f5f5; }
+      
+      #usernameContainer { text-align: center; margin: 20px; }
+      #chatContainer { display: none; }
+      
+      #form { background: rgba(0, 0, 0, 0.15); padding: 0.5rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; }
+      #input { flex-grow: 1; border-radius: 2rem; padding: 0 1rem; border: none; }
+      #form > button { background: #333; border: none; padding: 0 1rem; border-radius: 3px; color: #fff; }
+      
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages > li { padding: 0.5rem 1rem; background: #fff; margin-bottom: 5px; border-radius: 5px; }
+      #messages > li:nth-child(odd) { background: #efefef; }
+      
+      #typingIndicator { font-style: italic; color: #666; padding: 10px; }
+    </style>
+  </head>
+  <body>
+    <div id="usernameContainer">
+      <input id="username" placeholder="Enter your username" />
+      <button id="startChat">Join Chat</button>
+    </div>
+    
+    <div id="chatContainer">
+      <h2>Socket.IO Chat</h2>
+      <ul id="messages"></ul>
+      <p id="typingIndicator"></p>
+      <form id="form" action="">
+        <input id="input" autocomplete="off" />
+        <button>Send</button>
+      </form>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      var username;
+      
+      document.getElementById('startChat').addEventListener('click', function() {
+          username = document.getElementById('username').value || 'Anonymous';
+          socket.emit('set username', username);
+          document.getElementById('usernameContainer').style.display = 'none';
+          document.getElementById('chatContainer').style.display = 'block';
+      });
+      
+      var messages = document.getElementById('messages');
+      var form = document.getElementById('form');
+      var input = document.getElementById('input');
+      var typingIndicator = document.getElementById('typingIndicator');
+
+      form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          if (input.value) {
+              socket.emit('chat message', input.value);
+              input.value = '';
+              socket.emit('stop typing');
+          }
+      });
+
+      input.addEventListener('input', function() {
+          socket.emit('typing');
+      });
+
+      input.addEventListener('blur', function() {
+          socket.emit('stop typing');
+      });
+
+      socket.on('chat message', function(msg) {
+          var item = document.createElement('li');
+          item.innerHTML = `<strong>${msg.user}</strong> [${msg.time}]: ${msg.text}`;
+          messages.appendChild(item);
+          window.scrollTo(0, document.body.scrollHeight);
+      });
+      
+      socket.on('typing', function(user) {
+          typingIndicator.textContent = `${user} is typing...`;
+      });
+      
+      socket.on('stop typing', function() {
+          typingIndicator.textContent = '';
+      });
+    </script>
+  </body>
+</html>
